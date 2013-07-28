@@ -80,6 +80,14 @@ cmd-list-tube-used:0
 $ lentil -list-tubes | xargs -n1 lentil -stats-tube
 ```
 
+See all the active jobs:
+```
+$ lentil -peek-all
+All active jobs listed bellow:
+2750 => eq_02:5018d345558fbe46c4000001:51ca89ea6c35826b5c002a28:1374931784
+Count of all active jobs:  1
+```
+
 ## LINKS
 * beanstalkd: http://kr.github.com/beanstalkd/
 * beanstalkd source: https://github.com/kr/beanstalkd/
