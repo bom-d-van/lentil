@@ -6,6 +6,7 @@ import (
 	"github.com/nutrun/lentil"
 	"log"
 	"os"
+	"strconv"
 )
 
 var addr = flag.String("addr", "0.0.0.0:11300", "Beanstalkd address (host:port)")
@@ -17,6 +18,7 @@ var drain = flag.String("drain", "", "Empty tube by deleting all its jobs")
 var tube = flag.String("tube", "default", "Use tube")
 var put = flag.String("put", "", "Put job body")
 var peek = flag.Int("peek", 0, "Peek job by id")
+var peekAll = flag.Bool("peek-all", false, "Peek all available job")
 var peekBuried = flag.Bool("peek-buried", false, "Peek first buried job")
 var peekDelayed = flag.Bool("peek-delayed", false, "Peek first delayed job")
 var kick = flag.Int("kick", 0, "Move n buried or delayed jobs to ready queue")
@@ -96,6 +98,33 @@ func main() {
 		job, e := q.Peek(uint64(*peek))
 		err(e)
 		fmt.Printf("%d:%s\n", job.Id, job.Body)
+		os.Exit(0)
+	}
+	if *peekAll == true {
+		fmt.Println("All active jobs listed bellow:")
+		stats, e := q.StatsTube(*tube)
+		err(e)
+		// fmt.Println(stats["total-jobs"])
+		jobAccount, e := strconv.ParseUint(stats["total-jobs"], 10, 64)
+		if e != nil {
+			fmt.Println(e)
+			os.Exit(1)
+		}
+		var activeJobAccount uint64
+		for i := jobAccount; i > 0; i-- {
+			job, e := q.Peek(i)
+			if e != nil {
+				if e.Error() == "NOT_FOUND\r\n" {
+					continue
+				}
+
+				fmt.Println(e)
+				os.Exit(1)
+			}
+			activeJobAccount += 1
+			fmt.Printf("%d => %s\n", job.Id, job.Body)
+		}
+		fmt.Println("Count of all active jobs: ", activeJobAccount)
 		os.Exit(0)
 	}
 	if *peekBuried {
